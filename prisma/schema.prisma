@@ -1,21 +1,153 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+// schema.prisma
 
 generator client {
   provider = "prisma-client-js"
+  
 }
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
 model User {
-  id    Int     @id @default(autoincrement())
-  name  String
-  email String  @unique
-  password String
-  createdAt DateTime @default(now())
+  user_id    Int       @id @default(autoincrement())
+  name       String
+  email      String    @unique
+  role       Role 
+  region     String?
+  created_at DateTime  @default(now())
+
+  farmer     Farmer?
+  consumer   Consumer?
+  retailer   Retailer?
+
+  feedbackSent     Feedback[] @relation("FeedbackFrom")
+  feedbackReceived Feedback[] @relation("FeedbackTo")
+}
+
+model Farmer {
+  farmer_id  Int       @id @default(autoincrement())
+  user_id    Int       @unique
+  farm_name  String
+  location   String
+  created_at DateTime  @default(now())
+
+  user       User      @relation(fields: [user_id], references: [user_id])
+  products   Product[]
+  auctions   Auction[]
+}
+
+model Consumer {
+  consumer_id       Int       @id @default(autoincrement())
+  user_id           Int       @unique
+  preferred_category String?
+  created_at        DateTime  @default(now())
+
+  user              User      @relation(fields: [user_id], references: [user_id])
+}
+
+model Retailer {
+  retailer_id   Int       @id @default(autoincrement())
+  user_id       Int       @unique
+  business_name String
+  license_number String   @unique
+  created_at    DateTime  @default(now())
+
+  user          User      @relation(fields: [user_id], references: [user_id])
+  bids          BidsTransaction[]
+  invitations   Invitation[]
+}
+
+model Product {
+  product_id        Int       @id @default(autoincrement())
+  farmer_id         Int
+  name              String
+  description       String?
+  price_per_unit    Decimal
+  quantity_available Int
+  category          String?
+  image_url         String?
+  created_at        DateTime  @default(now())
+
+  farmer            Farmer    @relation(fields: [farmer_id], references: [farmer_id])
+}
+
+model Auction {
+  auction_id    Int       @id @default(autoincrement())
+  farmer_id     Int
+  title         String
+  slug          String    @unique
+  start_time    DateTime
+  end_time      DateTime
+  min_bid_price Decimal
+  status        AuctionStatus
+  created_at    DateTime  @default(now())
+
+  farmer        Farmer    @relation(fields: [farmer_id], references: [farmer_id])
+  bids          BidsTransaction[]
+  invitations   Invitation[]
+}
+
+model BidsTransaction {
+  bid_transaction_id Int       @id @default(autoincrement())
+  auction_id         Int
+  retailer_id        Int
+  bid_amount         Decimal?
+  final_price        Decimal?
+  quantity           Int
+  status             BidStatus
+  created_at         DateTime  @default(now())
+  updated_at         DateTime  @updatedAt
+
+  auction            Auction   @relation(fields: [auction_id], references: [auction_id])
+  retailer           Retailer  @relation(fields: [retailer_id], references: [retailer_id])
+}
+
+model Invitation {
+  invitation_id Int       @id @default(autoincrement())
+  auction_id    Int
+  retailer_id   Int
+  status        InvitationStatus
+  sent_at       DateTime  @default(now())
+
+  auction       Auction   @relation(fields: [auction_id], references: [auction_id])
+  retailer      Retailer  @relation(fields: [retailer_id], references: [retailer_id])
+}
+
+model Feedback {
+  feedback_id Int       @id @default(autoincrement())
+  from_user   Int
+  to_user     Int
+  rating      Int       
+  comment     String?
+  created_at  DateTime  @default(now())
+
+  from        User      @relation("FeedbackFrom", fields: [from_user], references: [user_id])
+  to          User      @relation("FeedbackTo", fields: [to_user], references: [user_id])
+}
+
+enum Role {
+  farmer
+  consumer
+  retailer
+}
+
+enum AuctionStatus {
+  open
+  closed
+}
+
+enum BidStatus {
+  pending
+  accepted
+  won
+  completed
+  canceled
+}
+
+enum InvitationStatus {
+  pending
+  accepted
+  declined
 }
