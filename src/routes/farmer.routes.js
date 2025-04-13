@@ -1,9 +1,20 @@
 const express = require("express");
 const { checkJwt, checkAndStoreUser } = require("../middlewares/authMiddleware");
-const {getAllFarmers} = require("../controllers/farmer.controller");
+const farmerController = require("../controllers/farmer.controller");
 
 const router = express.Router();
 
-router.get("/", checkJwt, checkAndStoreUser, getAllFarmers);
+router.get("/", checkJwt, checkAndStoreUser, farmerController.getAllFarmers);
+
+router.post('/add/:farmerId', checkJwt, farmerController.addProduct);
+
+router.get('/products/:farmerId', checkJwt, farmerController.getFarmerProducts);
+
+router.get('/all/products', checkJwt, farmerController.getAllProducts);
+
+router.put('/product/:productId', checkJwt, farmerController.updateProduct);
+
+router.delete('/product/:productId', checkJwt, farmerController.deleteProduct);
+
 
 module.exports = router;
