@@ -1,4 +1,4 @@
-const farmerService = require("../services/farmer.service");
+const farmerService = require("../../services/v1/farmer.service");
 
 const getAllFarmers = async (req, res, next) => {
   try {

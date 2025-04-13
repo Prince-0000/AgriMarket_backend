@@ -1,6 +1,6 @@
 const express = require("express");
-const { checkJwt, checkAndStoreUser } = require("../middlewares/authMiddleware");
-const farmerController = require("../controllers/farmer.controller");
+const { checkJwt, checkAndStoreUser } = require("../../middlewares/authMiddleware");
+const farmerController = require("../../controllers/v1/farmer.controller");
 
 const router = express.Router();
 
