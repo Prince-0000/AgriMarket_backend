@@ -55,4 +55,4 @@ const HTTP = {
     STATUS_500: InternalServerError
 };
   
-export default HTTP;
+module.exports = HTTP;
