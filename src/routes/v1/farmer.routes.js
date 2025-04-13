@@ -1,10 +1,10 @@
 const express = require("express");
-const { checkJwt, checkAndStoreUser } = require("../../middlewares/authMiddleware");
+const { checkJwt } = require("../../middlewares/authMiddleware");
 const farmerController = require("../../controllers/v1/farmer.controller");
 
 const router = express.Router();
 
-router.get("/", checkJwt, checkAndStoreUser, farmerController.getAllFarmers);
+router.get("/", checkJwt, farmerController.getAllFarmers);
 
 router.post('/add/:farmerId', checkJwt, farmerController.addProduct);
 
