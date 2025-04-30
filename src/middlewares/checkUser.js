@@ -2,6 +2,7 @@ const prisma = require("../config/db");
 
 const checkAndStoreUser = async (req, res, next) => {
     try {
+      console.log(req.auth);
       const email = req.auth?.email;
       const name = req.auth?.name;
   
@@ -16,7 +17,7 @@ const checkAndStoreUser = async (req, res, next) => {
           data: {
             email,
             name: name || "",
-            role: null,
+            role: "farmer",
           },
         });
       }
