@@ -9,13 +9,20 @@ const setupProfile = async (userId, role, profileData) => {
       throw new Error('Farmer profile already exists');
     }
 
-    return await prisma.farmer.create({
+    const farmer = await prisma.farmer.create({
       data: {
         user_id: userId,
         farm_name: profileData?.farm_name,
         location: profileData?.location,
       },
     });
+
+    await prisma.user.update({
+      where: { user_id: userId },
+      data: { role },
+    });
+
+    return farmer;
   }
 
   if (role === 'consumer') {
@@ -26,12 +33,19 @@ const setupProfile = async (userId, role, profileData) => {
       throw new Error('Consumer profile already exists');
     }
 
-    return await prisma.consumer.create({
+    const consumer = await prisma.consumer.create({
       data: {
         user_id: userId,
         preferred_category: profileData.preferred_category,
       },
     });
+
+    await prisma.user.update({
+      where: { user_id: userId },
+      data: { role },
+    });
+
+    return consumer;
   }
 
   if (role === 'retailer') {
@@ -42,13 +56,20 @@ const setupProfile = async (userId, role, profileData) => {
       throw new Error('Retailer profile already exists');
     }
 
-    return await prisma.retailer.create({
+    const retailer = await prisma.retailer.create({
       data: {
         user_id: userId,
         business_name: profileData.business_name,
         license_number: profileData.license_number,
       },
     });
+
+    await prisma.user.update({
+      where: { user_id: userId },
+      data: { role },
+    });
+
+    return retailer;
   }
 
   throw new Error('Invalid role');

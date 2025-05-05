@@ -2,9 +2,10 @@ const { setupProfile } = require('../../services/v1/profile.service');
 
 const setupUserProfile = async (req, res) => {
   try {
+    console.log(req.body);
     console.log(req.user);
     const userId = req.user.user_id;
-    const role = req.user?.role;
+    const role = req.body?.role;
     console.log(req.body);
     const profileData = req.body?.profileData;
 
