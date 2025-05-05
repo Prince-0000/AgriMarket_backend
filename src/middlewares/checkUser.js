@@ -17,7 +17,7 @@ const checkAndStoreUser = async (req, res, next) => {
           data: {
             email,
             name: name || "",
-            role: "farmer",
+            role: null,
           },
         });
       }

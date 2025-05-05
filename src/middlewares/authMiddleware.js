@@ -17,6 +17,7 @@ const checkJwt = jwt({
 });
 
 const checkAndStoreUser = async (req, res, next) => {
+  console.log("in store user");
   try {
     const email = req.auth?.email;
     const name = req.auth?.name;
@@ -32,7 +33,7 @@ const checkAndStoreUser = async (req, res, next) => {
         data: {
           email,
           name: name || '', // fallback if name is undefined
-          role:"farmer",
+          role:null,
         },
       });
       console.log("✅ New middleman stored:", user.email);
