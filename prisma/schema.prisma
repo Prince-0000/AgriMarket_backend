@@ -2,12 +2,13 @@
 
 generator client {
   provider = "prisma-client-js"
-  
+   output   = "../node_modules/.prisma/client"
 }
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+
 }
 
 model User {
@@ -15,7 +16,6 @@ model User {
   name       String
   email      String    @unique
   role       Role?
-  region     String?
   created_at DateTime  @default(now())
 
   farmer     Farmer?
@@ -32,6 +32,9 @@ model Farmer {
   farm_name  String
   location   String
   created_at DateTime  @default(now())
+   pincode      Int?
+   address   String?
+   phone     String?
 
   user       User      @relation(fields: [user_id], references: [user_id])
   products   Product[]
@@ -67,8 +70,9 @@ model Product {
   price_per_unit    Decimal
   quantity_available Int
   category          String?
-  image_url         String?
-  created_at        DateTime  @default(now())
+  image             Bytes?
+  status             ProductStatus @default(active)
+  created_at        DateTime  @default(now()) 
 
   farmer            Farmer    @relation(fields: [farmer_id], references: [farmer_id])
 }
@@ -151,3 +155,10 @@ enum InvitationStatus {
   accepted
   declined
 }
+
+enum ProductStatus {
+  active
+  inactive
+  sold
+}
+
