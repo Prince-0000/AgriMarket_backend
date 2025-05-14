@@ -24,7 +24,14 @@ const setupProfile = async (userId, role, profileData) => {
       data: { role },
     });
 
-    return farmer;
+    const user = await prisma.user.findUnique({
+  where: { user_id: userId },
+  select: {
+    role: true,
+  },
+});
+
+    return {...farmer, user};
   }
 
   if (role === 'consumer') {

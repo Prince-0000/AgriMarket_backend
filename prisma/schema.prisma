@@ -54,7 +54,6 @@ model Retailer {
   retailer_id   Int       @id @default(autoincrement())
   user_id       Int       @unique
   business_name String
-  license_number String   @unique
   created_at    DateTime  @default(now())
 
   user          User      @relation(fields: [user_id], references: [user_id])
