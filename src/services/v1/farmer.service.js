@@ -11,7 +11,7 @@ const getFarmers = async () => {
   };
 };
 
-const createProduct = async (farmerId, data) => {
+const createProduct = async (farmerId, data, imageBuffer) => {
   return await prisma.product.create({
     data: {
       name: data.name,
@@ -19,7 +19,7 @@ const createProduct = async (farmerId, data) => {
       price_per_unit: data.price_per_unit,
       quantity_available: data.quantity_available,
       category: data.category,
-      image_url: data.image_url,
+      image: imageBuffer,
       farmer_id: parseInt(farmerId),
     },
   });

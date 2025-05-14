@@ -11,13 +11,29 @@ const fetchProductById = async (id) => {
       farmer: {
         include: {
           user: {
-            select: { name: true, email: true, region: true }
+            select: { name: true, email: true }
           }
         }
       }
     }
   });
 };
+
+const productsByPincode = async(pincode) => {
+   const products = await prisma.product.findMany({
+    where: {
+      farmer: {
+        pincode: pincode,
+      },
+    },
+    include: {
+      farmer: true,
+    },
+  });
+
+  return products;
+}
+
 
 const sendFeedback = async (from_user_id, to_farmer_id, rating, comment) => {
   const farmer = await prisma.farmer.findUnique({
@@ -70,4 +86,4 @@ const fetchFeedbackForFarmer = async (farmerId) => {
 
 
 
-module.exports = { getAllProducts, fetchProductById, sendFeedback, fetchFeedbackForFarmer };
+module.exports = { getAllProducts, fetchProductById, productsByPincode, sendFeedback, fetchFeedbackForFarmer };

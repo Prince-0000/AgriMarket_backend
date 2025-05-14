@@ -1,8 +1,7 @@
 require("dotenv").config();
 const { expressjwt: jwt } = require("express-jwt");
 const jwksRsa = require("jwks-rsa");
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+const prisma = require("../config/db");
 
 const checkJwt = jwt({
   secret: jwksRsa.expressJwtSecret({
