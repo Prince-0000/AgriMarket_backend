@@ -12,9 +12,10 @@ const getAllFarmers = async (req, res, next) => {
 const addProduct = async (req, res) => {
     const { farmerId } = req.params;
     const productData = req.body;
+    const imageBuffer = req.file?.buffer;
   
     try {
-      const product = await farmerService.createProduct(farmerId, productData);
+      const product = await farmerService.createProduct(farmerId, productData, imageBuffer);
       res.status(201).json(product);
     } catch (err) {
       console.error(err);

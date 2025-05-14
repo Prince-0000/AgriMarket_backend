@@ -2,12 +2,10 @@ const { setupProfile } = require('../../services/v1/profile.service');
 
 const setupUserProfile = async (req, res) => {
   try {
-    console.log(req.body);
-    console.log(req.user);
     const userId = req.user.user_id;
     const role = req.body?.role;
-    console.log(req.body);
     const profileData = req.body?.profileData;
+    console.log(profileData);
 
     if (!userId || !role) {
       return res.status(400).json({ message: 'Missing user ID or role' });

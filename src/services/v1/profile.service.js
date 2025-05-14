@@ -14,6 +14,8 @@ const setupProfile = async (userId, role, profileData) => {
         user_id: userId,
         farm_name: profileData?.farm_name,
         location: profileData?.location,
+        pincode: Number(profileData?.pincode),
+        phone: profileData?.phone
       },
     });
 
@@ -22,7 +24,14 @@ const setupProfile = async (userId, role, profileData) => {
       data: { role },
     });
 
-    return farmer;
+    const user = await prisma.user.findUnique({
+  where: { user_id: userId },
+  select: {
+    role: true,
+  },
+});
+
+    return {...farmer, user};
   }
 
   if (role === 'consumer') {
@@ -60,7 +69,6 @@ const setupProfile = async (userId, role, profileData) => {
       data: {
         user_id: userId,
         business_name: profileData.business_name,
-        license_number: profileData.license_number,
       },
     });
 
