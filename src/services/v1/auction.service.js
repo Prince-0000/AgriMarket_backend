@@ -2,11 +2,8 @@ const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 const { v4: uuidv4 } = require("uuid");
 const slugify = require("slugify");
-const { Resend } = require("resend");
 const { sendEmail } = require("./email.service");
 
-const resend = new Resend(process.env.RESEND_API_KEY);
-// Create Auction and Invite Retailers
 const createAuctionService = async (data) => {
   const {
     farmer_id,
@@ -155,6 +152,48 @@ const placeBidService = async ({
 
   return bid;
 }
+const getAuctionListService = async (user) => {
+  console.log(user);
+  const { role } = user;
+
+  if (role === 'farmer') {
+    return await prisma.auction.findMany({
+      where: {
+        farmer_id: user.farmer?.farmer_id,
+      },
+      include: {
+        invitations: {
+          include: {
+            retailer: {
+              include: { user: true },
+            },
+          },
+        },
+      },
+    });
+  }
+
+  if (role === 'retailer') {
+    const invitations = await prisma.invitation.findMany({
+      where: {
+        retailer_id: user.retailer?.retailer_id,
+      },
+      include: {
+        auction: {
+          include: {
+            farmer: {
+              include: { user: true },
+            },
+          },
+        },
+      },
+    });
+
+    return invitations.map(inv => inv.auction);
+  }
+
+  return [];
+};
 
 module.exports = {
   createAuctionService,
@@ -162,5 +201,6 @@ module.exports = {
   acceptInvitationService,
   getAuctionBySlugService,
   closeAuctionService,
-  placeBidService
+  placeBidService,
+  getAuctionListService
 };

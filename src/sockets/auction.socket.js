@@ -1,6 +1,6 @@
-const prisma = require("../config/db");
 const { startAuctionCountdown } = require("../utils/auctionTimer");
 const verifySocketToken = require("../utils/verifyToken");
+const auctionService = require("../sockets/auction.service");
 
 const connectedAuctions = new Set();
 
@@ -15,13 +15,8 @@ module.exports = (io) => {
 
     const decoded = await verifySocketToken(token);
     const email = decoded.email;
-    const user = await prisma.user.findUnique({
-      where: { email },
-      include: {
-        farmer: true,
-        retailer: true,
-      },
-    });
+    const user = await auctionService.getUserByEmail(email);
+
     // console.log(user);
     if (!user) {
       console.log("user not found");
@@ -31,18 +26,7 @@ module.exports = (io) => {
     const role = user.role;
     let roleId = null;
 
-    // console.log(auctionId, roleId, role);
-    const auction = await prisma.auction.findUnique({
-      where: { auction_id: parseInt(auctionId) },
-      include: {
-        farmer: true,
-        invitations: {
-          include: {
-            retailer: true,
-          },
-        },
-      },
-    });
+    const auction = await auctionService.getAuctionById(auctionId);
 
     if (!auction) {
       console.log("auction not found");
@@ -73,7 +57,6 @@ module.exports = (io) => {
       role,
       roleId,
     };
-    console.log(socket.data);
 
     socket.join(String(auctionId));
 
@@ -82,85 +65,46 @@ module.exports = (io) => {
       connectedAuctions.add(auctionId);
     }
 
-    // 🛠 Real-time Bid Logic
     socket.on("placeBid", async ({ bidAmount, quantity }) => {
-      if (role !== "retailer")
-        return socket.emit("error", "Only retailers can place bids");
+  if (role !== "retailer")
+    return socket.emit("error", "Only retailers can place bids");
 
-      const retailer = await prisma.retailer.findUnique({
-        where: { retailer_id: parseInt(roleId) },
+  const retailer = await auctionService.getRetailerById(parseInt(roleId));
+  if (!retailer) return socket.emit("error", "Retailer not found");
+
+  const currentHighest = await auctionService.getCurrentHighestBid(parseInt(auctionId));
+  if (
+    currentHighest &&
+    parseFloat(bidAmount) <= parseFloat(currentHighest.bid_amount)
+  ) {
+    return socket.emit("error", "Bid must be higher than the current highest bid");
+  }
+
+  await auctionService.createNewBid({
+    auctionId: parseInt(auctionId),
+    retailerId: retailer.retailer_id,
+    bidAmount: parseFloat(bidAmount),
+    quantity,
+  });
+
+  const updatedBids = await auctionService.getHighestBidsPerRetailer(parseInt(auctionId));
+  const top3Bids = updatedBids
+    .sort((a, b) => b.bid_amount - a.bid_amount)
+    .slice(0, 3);
+
+  io.in(String(auctionId))
+    .fetchSockets()
+    .then((sockets) => {
+      sockets.forEach((s) => {
+        if (s.data?.role === "retailer") {
+          s.emit("topBids", top3Bids);
+        }
+        if (s.data?.role === "farmer") {
+          s.emit("allBids", updatedBids);
+        }
       });
-      if (!retailer) return socket.emit("error", "Retailer not found");
-
-      const currentHighest = await prisma.bidsTransaction.findFirst({
-        where: { auction_id: parseInt(auctionId) },
-        orderBy: { bid_amount: "desc" },
-      });
-
-      if (
-        currentHighest &&
-        parseFloat(bidAmount) <= parseFloat(currentHighest.bid_amount)
-      ) {
-        return socket.emit(
-          "error",
-          "Bid must be higher than the current highest bid"
-        );
-      }
-
-      const newBid = await prisma.bidsTransaction.create({
-        data: {
-          auction_id: parseInt(auctionId),
-          retailer_id: retailer.retailer_id,
-          bid_amount: parseFloat(bidAmount),
-          quantity,
-          status: "pending",
-        },
-        include: {
-          retailer: {
-            include: { user: true },
-          },
-        },
-      });
-
-      const highestBidsPerRetailer = await prisma.bidsTransaction.groupBy({
-        by: ["retailer_id"],
-        where: { auction_id: parseInt(auctionId) },
-        _max: { bid_amount: true },
-      });
-
-      const updatedBids = await Promise.all(
-        highestBidsPerRetailer.map(async (bid) => {
-          return prisma.bidsTransaction.findFirst({
-            where: {
-              auction_id: parseInt(auctionId),
-              retailer_id: bid.retailer_id,
-              bid_amount: bid._max.bid_amount,
-            },
-            include: {
-              retailer: {
-                include: { user: true },
-              },
-            },
-          });
-        })
-      );
-
-      const top3Bids = updatedBids.slice(0, 3);
-      //   console.log(top3Bids);
-      io.in(String(auctionId))
-        .fetchSockets()
-        .then((sockets) => {
-          sockets.forEach((s) => {
-            if (s.data?.role === "retailer") {
-              //   console.log("top3bids", top3Bids);
-              s.emit("topBids", top3Bids);
-            }
-            if (s.data?.role === "farmer") {
-              //   console.log("All Bids", updatedBids);
-              s.emit("allBids", updatedBids);
-            }
-          });
-        });
     });
+});
+
   });
 };

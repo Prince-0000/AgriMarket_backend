@@ -1,22 +1,16 @@
 const express = require('express');
-const {
-  createAuction,
-  getAuctionBySlug,
-  closeAuction,
-  getRetailerAuctions,
-  acceptInvitation,
-  placeBid
-} = require ('../../controllers/v1/auction.controller');
+const auctionController = require ('../../controllers/v1/auction.controller');
+const { checkJwt, checkAndStoreUser} = require("../../middlewares/authMiddleware");
 
 const router = express.Router();
 
-router.post('/create', createAuction);   
-router.get('/:slug', getAuctionBySlug);   
-router.patch('/:id/close', closeAuction);  
-router.post('/bid', placeBid)
+router.post('/create', checkJwt, auctionController.createAuction);   
+router.get('/list/:slug', checkJwt, auctionController.getAuctionBySlug);   
+router.patch('/:id/close', checkJwt, auctionController.closeAuction);  
+router.post('/bid', checkJwt, auctionController.placeBid)
+router.get('/list', checkJwt, checkAndStoreUser, auctionController.getAuctionList);
 
-
-router.get('/retailer/:retailer_id', getRetailerAuctions);
-router.post('/invite/accept', acceptInvitation);
+router.get('/retailer/:retailer_id', checkJwt, auctionController.getRetailerAuctions);
+router.post('/invite/accept', checkJwt, auctionController.acceptInvitation);
 
 module.exports = router;
