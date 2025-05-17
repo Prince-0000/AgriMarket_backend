@@ -59,6 +59,7 @@ model Retailer {
   user          User      @relation(fields: [user_id], references: [user_id])
   bids          BidsTransaction[]
   invitations   Invitation[]
+   auctionsWon   Auction[] @relation("AuctionWinner")
 }
 
 model Product {
@@ -86,6 +87,9 @@ model Auction {
   min_bid_price Decimal
   status        AuctionStatus
   created_at    DateTime  @default(now())
+  
+  winner_id     Int?      
+  winner        Retailer? @relation("AuctionWinner", fields: [winner_id], references: [retailer_id])
 
   farmer        Farmer    @relation(fields: [farmer_id], references: [farmer_id])
   bids          BidsTransaction[]

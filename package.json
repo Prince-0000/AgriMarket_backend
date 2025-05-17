@@ -10,7 +10,7 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
-    "@prisma/client": "^6.7.0",
+    "@prisma/client": "^6.8.0",
     "axios": "^1.7.9",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
@@ -22,6 +22,10 @@
     "morgan": "^1.10.0",
     "next-auth": "^4.24.11",
     "pg": "^8.14.1",
+    "resend": "^4.5.1",
+    "slugify": "^1.6.6",
+    "socket.io": "^4.8.1",
+    "uuid": "^11.1.0",
     "winston": "^3.17.0"
   },
   "devDependencies": {

@@ -2,7 +2,6 @@ const express = require("express");
 const cors = require("cors");
 const helmet = require("helmet");
 const morgan = require("morgan");
-const farmerRoutes = require("./routes/v1/farmer.routes");
 const { errorHandler } = require("./middlewares/errorMiddleware");
 const routes = require("./routes/base.routes");
 

@@ -7,7 +7,6 @@ const getAllFarmers = async () => {
           select: {
             name: true,
             email: true,
-            region: true,
           },
         },
       },
