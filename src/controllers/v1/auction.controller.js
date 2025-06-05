@@ -39,13 +39,25 @@ const closeAuction = async (req, res) => {
 
 const getRetailerAuctions = async (req, res) => {
   try {
+    const {retailer_id} = req.query;
     const auctions = await auctionService.getRetailerAuctionsService(
-      parseInt(req.params.retailer_id)
+      parseInt(retailer_id)
     );
     res.status(200).json({ success: true, auctions });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
+};
+const getFarmerAuction = async (req, res) => {
+ const { farmer_id } = req.query;
+
+  if (!farmer_id) {
+    return res.status(400).json({ success: false, message: "Missing farmer_id in query params" });
+  }
+
+  const auctions = await auctionService.getFarmerAuctionsService(Number(farmer_id));
+
+  return res.status(200).json({ success: true, auctions });
 };
 
 const acceptInvitation = async (req, res) => {
@@ -84,6 +96,7 @@ module.exports = {
   getAuctionBySlug,
   closeAuction,
   getRetailerAuctions,
+  getFarmerAuction,
   acceptInvitation,
   placeBid,
   getAuctionList

@@ -1,4 +1,3 @@
-// utils/verifySocketToken.js
 const jwt = require('jsonwebtoken');
 const jwksClient = require('jwks-rsa');
 
@@ -7,8 +6,18 @@ const client = jwksClient({
 });
 
 function getKey(header, callback) {
+  console.log("🔍 Verifying token with header:", header);
+
   client.getSigningKey(header.kid, function (err, key) {
-    const signingKey = key.getPublicKey();
+    if (err) {
+      console.error("❌ Failed to get signing key:", err);
+      return callback(err);
+    }
+
+    const signingKey = key.getPublicKey
+      ? key.getPublicKey()
+      : key.rsaPublicKey;
+
     callback(null, signingKey);
   });
 }
@@ -24,7 +33,10 @@ const verifySocketToken = (token) => {
         algorithms: ['RS256']
       },
       (err, decoded) => {
-        if (err) return reject(err);
+        if (err) {
+          console.error("❌ JWT verification failed:", err);
+          return reject(err);
+        }
         resolve(decoded);
       }
     );

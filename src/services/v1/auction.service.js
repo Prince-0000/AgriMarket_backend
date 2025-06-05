@@ -3,6 +3,7 @@ const prisma = new PrismaClient();
 const { v4: uuidv4 } = require("uuid");
 const slugify = require("slugify");
 const { sendEmail } = require("./email.service");
+const generateAuctionCreatedEmail = require("../../template/auctionCreated")
 
 const createAuctionService = async (data) => {
   const {
@@ -82,7 +83,7 @@ const createAuctionService = async (data) => {
     await sendEmail({
       to: retailerEmail,
       subject: "You are Invited to a New Auction",
-      html: `<h3>You have been invited to the auction: "${auction.title}".</h3><p>Start: ${auction.start_time}</p><p>End: ${auction.end_time}</p>`,
+      html: generateAuctionCreatedEmail(auction)
     });
   }
 
@@ -101,6 +102,25 @@ const getRetailerAuctionsService = async (retailer_id) => {
   return invitations.map((invite) => invite.auction);
 };
 
+const getFarmerAuctionsService = async (farmer_id) => {
+  const auctions = await prisma.auction.findMany({
+    where: { farmer_id },
+    include: {
+      invitations: {
+        include: {
+          retailer: {
+            include: {
+              user: true,
+            },
+          },
+        },
+      },
+    },
+    orderBy: { start_time: 'desc' },
+  });
+
+  return auctions;
+};
 // Retailer Accept Invitation
 const acceptInvitationService = async (auction_id, retailer_id) => {
   const updated = await prisma.invitation.updateMany({
@@ -198,6 +218,7 @@ const getAuctionListService = async (user) => {
 module.exports = {
   createAuctionService,
   getRetailerAuctionsService,
+  getFarmerAuctionsService,
   acceptInvitationService,
   getAuctionBySlugService,
   closeAuctionService,

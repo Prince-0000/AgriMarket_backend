@@ -1,12 +1,12 @@
 const prisma = require("../../config/db");
 
 const setupProfile = async (userId, role, profileData) => {
-  if (role === 'farmer') {
+  if (role === "farmer") {
     const existing = await prisma.farmer.findUnique({
       where: { user_id: userId },
     });
     if (existing) {
-      throw new Error('Farmer profile already exists');
+      throw new Error("Farmer profile already exists");
     }
 
     const farmer = await prisma.farmer.create({
@@ -15,7 +15,7 @@ const setupProfile = async (userId, role, profileData) => {
         farm_name: profileData?.farm_name,
         location: profileData?.location,
         pincode: Number(profileData?.pincode),
-        phone: profileData?.phone
+        phone: profileData?.phone,
       },
     });
 
@@ -25,21 +25,21 @@ const setupProfile = async (userId, role, profileData) => {
     });
 
     const user = await prisma.user.findUnique({
-  where: { user_id: userId },
-  select: {
-    role: true,
-  },
-});
+      where: { user_id: userId },
+      select: {
+        role: true,
+      },
+    });
 
-    return {...farmer, user};
+    return { ...farmer, user };
   }
 
-  if (role === 'consumer') {
+  if (role === "consumer") {
     const existing = await prisma.consumer.findUnique({
       where: { user_id: userId },
     });
     if (existing) {
-      throw new Error('Consumer profile already exists');
+      throw new Error("Consumer profile already exists");
     }
 
     const consumer = await prisma.consumer.create({
@@ -53,16 +53,21 @@ const setupProfile = async (userId, role, profileData) => {
       where: { user_id: userId },
       data: { role },
     });
-
-    return consumer;
+    const user = await prisma.user.findUnique({
+      where: { user_id: userId },
+      select: {
+        role: true,
+      },
+    });
+    return { ...consumer, user };
   }
 
-  if (role === 'retailer') {
+  if (role === "retailer") {
     const existing = await prisma.retailer.findUnique({
       where: { user_id: userId },
     });
     if (existing) {
-      throw new Error('Retailer profile already exists');
+      throw new Error("Retailer profile already exists");
     }
 
     const retailer = await prisma.retailer.create({
@@ -76,11 +81,16 @@ const setupProfile = async (userId, role, profileData) => {
       where: { user_id: userId },
       data: { role },
     });
-
-    return retailer;
+    const user = await prisma.user.findUnique({
+      where: { user_id: userId },
+      select: {
+        role: true,
+      },
+    });
+    return { ...retailer, user };
   }
 
-  throw new Error('Invalid role');
+  throw new Error("Invalid role");
 };
 
 module.exports = {

@@ -4,6 +4,7 @@ const productRoutes = require("./product.routes");
 const authRoutes = require("./auth.routes");
 const profileRoutes = require("./profle.routes");
 const auctionRoutes = require("./auction.routes");
+const retailerRoutes = require("./retailer.routes");
 
 const router = express.Router();
 
@@ -12,6 +13,7 @@ router.use("/products", productRoutes);
 router.use("/auth", authRoutes);
 router.use("/profile", profileRoutes);
 router.use("/auction",auctionRoutes);
+router.use("/retailer", retailerRoutes);
 
 module.exports = router;
 

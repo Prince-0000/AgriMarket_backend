@@ -59,52 +59,74 @@ module.exports = (io) => {
     };
 
     socket.join(String(auctionId));
+    console.log(`🔌 ${socket.id} joined auction ${auctionId}`);
 
     if (!connectedAuctions.has(auctionId)) {
       startAuctionCountdown(auction, io);
       connectedAuctions.add(auctionId);
     }
 
-    socket.on("placeBid", async ({ bidAmount, quantity }) => {
+   
+  socket.on("placeBid", async ({ bidAmount, quantity }) => {
+  console.log("📨 Bid received:", bidAmount, quantity);
+
   if (role !== "retailer")
     return socket.emit("error", "Only retailers can place bids");
 
   const retailer = await auctionService.getRetailerById(parseInt(roleId));
   if (!retailer) return socket.emit("error", "Retailer not found");
 
-  const currentHighest = await auctionService.getCurrentHighestBid(parseInt(auctionId));
-  if (
-    currentHighest &&
-    parseFloat(bidAmount) <= parseFloat(currentHighest.bid_amount)
-  ) {
-    return socket.emit("error", "Bid must be higher than the current highest bid");
+  const auctionDetails = await auctionService.getAuctionById(auctionId);
+  if (!auctionDetails) return socket.emit("error", "Auction not found");
+
+  const minBidPrice = parseFloat(auctionDetails.min_bid_price);
+  const bidValue = parseFloat(bidAmount);
+
+  // ⛔ Bid must be greater than min bid price
+  if (bidValue <= minBidPrice) {
+    return socket.emit("error", `Bid must be higher than min price ₹${minBidPrice}`);
   }
 
+  // ✅ Get current highest bid
+  const currentHighest = await auctionService.getCurrentHighestBid(parseInt(auctionId));
+
+  if (currentHighest) {
+    const currentTop = parseFloat(currentHighest.bid_amount);
+
+    // ⛔ If not greater than highest bid, reject
+    if (bidValue <= currentTop) {
+      return socket.emit("error", `Bid must be higher than current highest bid ₹${currentTop}`);
+    }
+  }
+
+  // ✅ Passed all checks – create bid
   await auctionService.createNewBid({
     auctionId: parseInt(auctionId),
     retailerId: retailer.retailer_id,
-    bidAmount: parseFloat(bidAmount),
+    bidAmount: bidValue,
     quantity,
   });
 
+  // ✅ Broadcast updates
   const updatedBids = await auctionService.getHighestBidsPerRetailer(parseInt(auctionId));
-  const top3Bids = updatedBids
+  console.log("✅ Bid saved, broadcasting updates...");
+
+  const top3Bids = [...updatedBids]
     .sort((a, b) => b.bid_amount - a.bid_amount)
     .slice(0, 3);
 
-  io.in(String(auctionId))
-    .fetchSockets()
-    .then((sockets) => {
-      sockets.forEach((s) => {
-        if (s.data?.role === "retailer") {
-          s.emit("topBids", top3Bids);
-        }
-        if (s.data?.role === "farmer") {
-          s.emit("allBids", updatedBids);
-        }
-      });
-    });
+  const sockets = await io.in(String(auctionId)).fetchSockets();
+  sockets.forEach((s) => {
+    console.log(`🔍 Emitting to ${s.id} (${s.data?.role})`);
+
+    if (s.data?.role === "retailer") {
+      s.emit("topBids", top3Bids);
+    } else if (s.data?.role === "farmer") {
+      s.emit("allBids", updatedBids);
+    }
+  });
 });
+
 
   });
 };

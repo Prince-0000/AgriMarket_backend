@@ -1,5 +1,5 @@
 const prisma = require('../config/db');
-
+const { sendEmail } = require("../services/v1/email.service");
 const timers = {};
 
 const startAuctionCountdown = (auction, io) => {
@@ -15,7 +15,7 @@ const startAuctionCountdown = (auction, io) => {
   // Send countdown every second
   timers[auctionId] = setInterval(async () => {
     const timeLeft = new Date(auction.end_time).getTime() - Date.now();
-    console.log(timeLeft);
+    // console.log(timeLeft);
     if (timeLeft <= 0) {
       clearInterval(timers[auctionId]);
       await autoCloseAuction(auctionId, io);
@@ -39,24 +39,39 @@ const autoCloseAuction = async (auctionId, io) => {
   });
 
   if (winningBid) {
-    await prisma.auction.update({
-      where: { auction_id: auctionId },
-      data: { winner_id: winningBid.retailer_id }
-    });
+  await prisma.auction.update({
+    where: { auction_id: auctionId },
+    data: { winner_id: winningBid.retailer_id }
+  });
 
-    // Notify winner via email
-    // await sendWinnerEmail(winningBid.retailer.user.email, auction.title, winningBid.bid_amount);
+  const userEmail = winningBid.retailer?.user?.email;
+  const businessName = winningBid.retailer?.business_name;
 
-    io.to(String(auctionId)).emit('auctionClosed', {
-      winner: {
-        retailerId: winningBid.retailer_id,
-        bidAmount: winningBid.bid_amount,
-        name: winningBid.retailer.business_name,
-      }
+  if (userEmail) {
+    await sendEmail({
+      to: userEmail,
+      subject: `🎉 Congratulations! You won the auction: ${auction.title}`,
+      html: `
+        <h2>Congratulations ${businessName}!</h2>
+        <p>You have won the auction <strong>${auction.title}</strong> with a bid of <strong>₹${winningBid.bid_amount}</strong>.</p>
+        <p>We'll contact you with further steps.</p>
+        <br />
+        <p>Thank you,<br/>AgriMarket Team</p>
+      `,
     });
-  } else {
-    io.to(String(auctionId)).emit('auctionClosed', { winner: null });
   }
+
+  io.to(String(auctionId)).emit('auctionClosed', {
+    winner: {
+      retailerId: winningBid.retailer_id,
+      bidAmount: winningBid.bid_amount,
+      name: businessName,
+    }
+  });
+} else {
+  io.to(String(auctionId)).emit('auctionClosed', { winner: null });
+}
+
 };
 
 module.exports = {

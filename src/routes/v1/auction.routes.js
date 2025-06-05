@@ -10,7 +10,8 @@ router.patch('/:id/close', checkJwt, auctionController.closeAuction);
 router.post('/bid', checkJwt, auctionController.placeBid)
 router.get('/list', checkJwt, checkAndStoreUser, auctionController.getAuctionList);
 
-router.get('/retailer/:retailer_id', checkJwt, auctionController.getRetailerAuctions);
+router.get('/retailer/list', checkJwt, auctionController.getRetailerAuctions);
+router.get('/farmer/list', checkJwt, auctionController.getFarmerAuction);
 router.post('/invite/accept', checkJwt, auctionController.acceptInvitation);
 
 module.exports = router;
